@@ -950,6 +950,7 @@ class SingleCellVariationalInference(CellariumModel, PredictMixin):
         return {
             "loss": loss,
             "reconstruction_loss": rec_loss,
+            "kl_annealing_weight": kl_annealing_weight,
             "kl_divergence_z": kl_divergence_z,
             "z_nk": inference_outputs["z"],
         }
