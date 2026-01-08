@@ -161,21 +161,22 @@ class ImputationModel(SingleCellVariationalInference):
             f"Invalid KL annealing weight: {kl_annealing_weight}"
         )
         
-        # loss = torch.mean(
-        #     (1.0 - self.noise2self_ratio) * rec_loss_n
-        #     + self.noise2self_ratio * noise2self_rec_loss_n
-        #     + kl_annealing_weight
-        #     * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
-        #     dim=0,
-        # )
 
         loss = torch.mean(
-            rec_loss_n
-            + noise2self_rec_loss_n
+            (1.0 - self.noise2self_ratio) * rec_loss_n
+            + self.noise2self_ratio * noise2self_rec_loss_n
             + kl_annealing_weight
             * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
             dim=0,
         )
+
+        # loss = torch.mean(
+        #     rec_loss_n
+        #     + noise2self_rec_loss_n
+        #     + kl_annealing_weight
+        #     * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
+        #     dim=0,
+        # )
 
         return {
             "loss": loss,
