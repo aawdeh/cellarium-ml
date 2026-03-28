@@ -196,6 +196,70 @@ class FullyConnectedWithBatchArchitecture(torch.nn.Module):
         return x_
 
 
+
+class LibSizeEncoder(torch.nn.Module):
+    """
+    Encode data of ``in_features`` dimensions into a library size distribution.
+
+    Args:
+        in_features: The dimensionality of the input (data space)
+        hidden_layers: A list of dictionaries, each containing the following keys:
+            * ``class_path``: the class path of the layer to use
+            * ``init_args``: a dictionary of keyword arguments to pass to the layer's constructor
+                - must contain "out_features"
+        final_layer: Same as hidden_layers, but for the final layer
+        var_eps: Minimum value for the variance; used for numerical stability
+    """
+
+    def __init__(
+        self,
+        in_features: int,
+        hidden_layers: list[dict],
+        final_layer: dict,
+        var_eps: float = 1e-4,
+    ):
+        super().__init__()
+        self.fully_connected = FullyConnectedWithBatchArchitecture(in_features, hidden_layers)
+        self.mean_encoder = instantiate_from_class_path(
+            final_layer["class_path"],
+            in_features=self.fully_connected.out_features,
+            out_features=1,
+            bias=final_layer["init_args"].get("bias", True),
+            **final_layer["init_args"],
+        )
+        self.var_encoder = instantiate_from_class_path(
+            final_layer["class_path"],
+            in_features=self.fully_connected.out_features,
+            out_features=1,
+            bias=final_layer["init_args"].get("bias", True),
+            **final_layer["init_args"],
+        )
+        self.mean_encoder_takes_batch = isinstance(self.mean_encoder, LinearWithBatch)
+        self.var_eps = var_eps
+
+    def forward(
+        self,
+        x_ng: torch.Tensor,
+        batch_nb: torch.Tensor,
+        categorical_covariate_np: torch.Tensor | None,
+    ) -> Distribution:
+        q_nh = self.fully_connected(x_ng, batch_nb=batch_nb, categorical_covariate_np=categorical_covariate_np)
+        q_mean_n1 = (
+            self.mean_encoder(q_nh, batch_nb=batch_nb, categorical_covariate_np=categorical_covariate_np)
+            if self.mean_encoder_takes_batch
+            else self.mean_encoder(q_nh)
+        )
+        q_var_n1 = (
+            torch.exp(
+                self.var_encoder(q_nh, batch_nb=batch_nb, categorical_covariate_np=categorical_covariate_np)
+                if self.mean_encoder_takes_batch
+                else self.var_encoder(q_nh)
+            )
+            + self.var_eps
+        )
+        return Normal(q_mean_n1, q_var_n1.sqrt())
+
+
 class EncoderSCVI(torch.nn.Module):
     """
     Encode data of ``in_features`` dimensions into a latent space of ``out_features`` dimensions.

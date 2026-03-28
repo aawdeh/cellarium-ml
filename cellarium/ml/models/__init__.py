@@ -11,12 +11,16 @@ from cellarium.ml.models.onepass_mean_var_std import OnePassMeanVarStd
 from cellarium.ml.models.probabilistic_pca import ProbabilisticPCA
 from cellarium.ml.models.scvi import SingleCellVariationalInference
 from cellarium.ml.models.tdigest import TDigest
+from cellarium.ml.models.imputation_anneal import ImputationModel_Annealing
+from cellarium.ml.models.imputation_gene import ImputationModel_Gene
 
 __all__ = [
     "CellariumGPT",
     "CellariumModel",
     "Geneformer",
     "ImputationModel",
+    "ImputationModel_Annealing",
+    "ImputationModel_Gene",
     "IncrementalPCA",
     "LogisticRegression",
     "OnePassMeanVarStd",

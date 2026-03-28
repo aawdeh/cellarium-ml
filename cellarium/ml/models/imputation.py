@@ -148,41 +148,53 @@ class ImputationModel(SingleCellVariationalInference):
             min_kl_weight=self.kl_annealing_start,
         )
 
-        # compute the regular scvi reconstruction loss
-        rec_loss_n = -generative_outputs["px"].log_prob(x_ng)[
-            :, ~logical_mask_g].sum(-1)
+        # commented this out for testing this scvi loss funtion 
+        # # compute the regular scvi reconstruction loss
+        # rec_loss_n = -generative_outputs["px"].log_prob(x_ng)[
+        #     :, ~logical_mask_g].sum(-1)
 
-        # apply the noise2self mask when computing the reconstruction loss
-        noise2self_rec_loss_n = -generative_outputs["px"].log_prob(x_ng)[
-            :, logical_mask_g].sum(-1) 
+        # # apply the noise2self mask when computing the reconstruction loss
+        # noise2self_rec_loss_n = -generative_outputs["px"].log_prob(x_ng)[
+        #     :, logical_mask_g].sum(-1) 
+        
+        rec_loss = -generative_outputs["px"].log_prob(x_ng).sum(-1)
 
         # full loss
         assert kl_annealing_weight >= 0.0 and kl_annealing_weight <= 1.0, (
             f"Invalid KL annealing weight: {kl_annealing_weight}"
         )
         
-
-        loss = torch.mean(
-            (1.0 - self.noise2self_ratio) * rec_loss_n
-            + self.noise2self_ratio * noise2self_rec_loss_n
-            + kl_annealing_weight
-            * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
-            dim=0,
-        )
-
+        # commented this out
         # loss = torch.mean(
-        #     rec_loss_n
-        #     + noise2self_rec_loss_n
+        #     (1.0 - self.noise2self_ratio) * rec_loss_n
+        #     + self.noise2self_ratio * noise2self_rec_loss_n
         #     + kl_annealing_weight
         #     * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
         #     dim=0,
         # )
 
+        loss = torch.mean(
+            rec_loss
+            + kl_annealing_weight
+            * (self.z_kl_weight_max * kl_divergence_z + self.batch_kl_weight_max * kl_divergence_batch),
+            dim=0,
+        )
+
+        # commented this out
+        # return {
+        #     "loss": loss,
+        #     "reconstruction_loss": rec_loss_n,
+        #     "noise2self_rec_loss_n": noise2self_rec_loss_n,
+        #     "kl_divergence_z": kl_divergence_z,
+        #     "kl_annealing_weight": kl_annealing_weight,
+        #     "z_nk": inference_outputs["z"],
+        # }
+    
         return {
             "loss": loss,
-            "reconstruction_loss": rec_loss_n,
-            "noise2self_rec_loss_n": noise2self_rec_loss_n,
+            "reconstruction_loss": rec_loss,
             "kl_divergence_z": kl_divergence_z,
             "kl_annealing_weight": kl_annealing_weight,
             "z_nk": inference_outputs["z"],
         }
+
