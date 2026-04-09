@@ -11,6 +11,8 @@ from cellarium.ml.models.onepass_mean_var_std import OnePassMeanVarStd
 from cellarium.ml.models.probabilistic_pca import ProbabilisticPCA
 from cellarium.ml.models.scvi import SingleCellVariationalInference
 from cellarium.ml.models.tdigest import TDigest
+from cellarium.ml.models.scvi_modified import SingleCellVariationalInference_Modified
+from cellarium.ml.models.diffusion_prior import LatentDiffusionPrior
 
 __all__ = [
     "CellariumGPT",
@@ -26,4 +28,7 @@ __all__ = [
     "TestMixin",
     "ValidateMixin",
     "SingleCellVariationalInference",
+    "SingleCellVariationalInference_Modified",
+    "LatentDiffusionPrior"
+    
 ]
